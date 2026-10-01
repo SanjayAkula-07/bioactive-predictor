@@ -1,4 +1,4 @@
-﻿"""
+"""
 backend/main.py
 ===============
 FastAPI Backend for Bioactive Molecule Predictor
@@ -7,6 +7,7 @@ Endpoints:
   GET  /          -> API information and active model
   GET  /health    -> Health check status
   POST /predict   -> Predict bioactivity from a molecular SMILES string
+  GET  /results   -> Returns CV comparison results and confusion matrices for all six models
   GET  /app       -> Serves the frontend web interface directly
 
 The backend loads the trained best model (saved during train_model.py)
@@ -35,14 +36,15 @@ MODEL_PATH = os.path.join(CURRENT_DIR, "model", "best_model.pkl")
 METADATA_PATH = os.path.join(CURRENT_DIR, "model", "metadata.json")
 FRONTEND_DIR = os.path.join(PROJECT_ROOT, "frontend")
 
+
+
 # --- Load Model & Metadata at Startup ---
 try:
     best_model = joblib.load(MODEL_PATH)
     with open(METADATA_PATH, "r", encoding="utf-8") as f:
         metadata = json.load(f)
 
-    BEST_MODEL_NAME = metadata["best_model_name"]
-    REVERSE_MAPPING = {int(k): v for k, v in metadata["reverse_mapping"].items()}
+    BEST_MODEL_NAME = metadata["selected_model"]
     FINGERPRINT_RADIUS = int(metadata.get("fingerprint_radius", 2))
     FINGERPRINT_BITS = int(metadata.get("fingerprint_bits", 2048))
     print(f"[OK] Model successfully loaded: {BEST_MODEL_NAME}")
@@ -90,15 +92,36 @@ def smiles_to_fingerprint(smiles: str):
 
 
 # --- API Routes ---
+from fastapi import Request
+from fastapi.responses import FileResponse, RedirectResponse
+
 @app.get("/")
-def root():
-    """API welcome message with current model information."""
+def root(request: Request):
+    """API welcome message or redirect to app if opened in a web browser."""
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        return RedirectResponse(url="/app/")
     return {
         "message": "Bioactive Molecule Predictor API",
         "model": BEST_MODEL_NAME,
         "docs": "/docs",
         "app": "/app/"
     }
+
+@app.get("/style.css")
+def get_root_css():
+    return FileResponse(os.path.join(FRONTEND_DIR, "style.css"), media_type="text/css")
+
+@app.get("/script.js")
+def get_root_js():
+    return FileResponse(os.path.join(FRONTEND_DIR, "script.js"), media_type="application/javascript")
+
+@app.get("/assets/{file_path:path}")
+def get_root_assets(file_path: str):
+    full_path = os.path.join(FRONTEND_DIR, "assets", file_path)
+    if os.path.exists(full_path):
+        return FileResponse(full_path)
+    raise HTTPException(status_code=404, detail="Asset not found")
 
 
 @app.get("/health")
@@ -107,6 +130,24 @@ def health():
     return {
         "status": "healthy",
         "model_loaded": BEST_MODEL_NAME
+    }
+
+
+@app.get("/results")
+def results():
+    """
+    Returns model comparison results for all six models.
+
+    - cv_results:      The cross-validation metrics for all six models
+                       (from metadata.json, produced by the ML pipeline).
+    - selected_model:  The name of the best model chosen by the pipeline.
+    - final_holdout:   Accuracy/Precision/Recall/F1/ROC-AUC of the selected
+                       model on the untouched holdout set.
+    """
+    return {
+        "selected_model": metadata.get("selected_model"),
+        "cv_results": metadata.get("cv_results", []),
+        "final_holdout": metadata.get("final_holdout_results", {}),
     }
 
 
@@ -135,7 +176,7 @@ def predict(request: PredictRequest):
     # Predict using loaded model
     try:
         pred_int = int(best_model.predict(features)[0])
-        pred_label = REVERSE_MAPPING.get(pred_int, "active" if pred_int == 1 else "inactive")
+        pred_label = "Active" if pred_int == 1 else "Inactive"
 
         # Probability score
         if hasattr(best_model, "predict_proba"):
@@ -163,29 +204,6 @@ def predict(request: PredictRequest):
     }
 
 
-# --- Serve model diagnostic images ---
-from fastapi.responses import FileResponse
-
-MODEL_DIR = os.path.join(CURRENT_DIR, "model")
-
-@app.get("/model-image/{filename}")
-def get_model_image(filename: str):
-    """Serve diagnostic plot images from backend/model/ directory."""
-    allowed = [
-        "model_comparison.png", "confusion_matrix.png", "roc_curve.png",
-        "confusion_matrix_xgboost.png", "confusion_matrix_random_forest.png",
-        "confusion_matrix_linear_svm.png", "confusion_matrix_naive_bayes.png",
-        "confusion_matrix_rbf_network.png"
-    ]
-    if filename not in allowed:
-        raise HTTPException(status_code=404, detail="Image not found.")
-    filepath = os.path.join(MODEL_DIR, filename)
-    if not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail=f"{filename} not generated yet. Run train_model.py first.")
-    return FileResponse(filepath, media_type="image/png")
-
-
 # --- Mount Frontend static app at /app ---
 if os.path.exists(FRONTEND_DIR):
     app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
-

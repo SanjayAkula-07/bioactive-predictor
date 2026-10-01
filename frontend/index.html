@@ -1,16 +1,38 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bioactive Molecule Predictor</title>
-  <meta name="description" content="AI-powered drug discovery tool that predicts molecular bioactivity against COX-2 using Machine Learning and Morgan Fingerprints." />
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css?v=3.2" />
+  <style>
+    /* Critical Inline Fallback & Reset to ensure immediate, flawless rendering */
+    :root {
+      --primary: #1a6fdb;
+      --primary-dk: #1558b0;
+      --primary-lt: #eef4ff;
+      --accent: #0d9488;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --radius: 10px;
+      --radius-lg: 16px;
+      --shadow: 0 4px 16px rgba(15,23,42,0.08);
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --mono: 'Consolas', 'Courier New', monospace;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); margin: 0; line-height: 1.6; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow); }
+  </style>
 </head>
 <body>
 
-  <!-- NAVIGATION -->
+  <!-- ====================================================
+       NAVIGATION
+       ==================================================== -->
   <nav class="navbar" role="navigation">
     <div class="container nav-inner">
       <a href="#home" class="nav-logo">
@@ -30,8 +52,8 @@
       <ul class="nav-links">
         <li><a href="#home">Home</a></li>
         <li><a href="#predict">Predict</a></li>
-        <li><a href="#how-it-works">How It Works</a></li>
         <li><a href="#models">Models &amp; Results</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
         <li><a href="#about">About</a></li>
       </ul>
       <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
@@ -43,13 +65,15 @@
   <div class="nav-mobile" id="navMobile">
     <a href="#home"         class="mobile-link">Home</a>
     <a href="#predict"      class="mobile-link">Predict</a>
-    <a href="#how-it-works" class="mobile-link">How It Works</a>
     <a href="#models"       class="mobile-link">Models &amp; Results</a>
+    <a href="#how-it-works" class="mobile-link">How It Works</a>
     <a href="#about"        class="mobile-link">About</a>
   </div>
 
 
-  <!-- HERO -->
+  <!-- ====================================================
+       HERO
+       ==================================================== -->
   <section id="home">
     <div class="container hero-inner">
       <div class="hero-text">
@@ -95,7 +119,9 @@
   </section>
 
 
-  <!-- PREDICTION WORKSPACE -->
+  <!-- ====================================================
+       PREDICTION WORKSPACE
+       ==================================================== -->
   <section id="predict">
     <div class="container">
       <div class="section-label">Workspace</div>
@@ -122,7 +148,7 @@
               aria-required="true"
             ></textarea>
             <div class="input-hint">
-              SMILES encodes molecular structure as text. &nbsp;
+              <span>SMILES encodes chemical topology as text.</span>
               <button class="link-btn" id="loadExampleBtn" type="button">Load Example</button>
             </div>
             <div class="error-msg" id="inputError" role="alert"></div>
@@ -134,8 +160,8 @@
           </div>
 
           <!-- Backend status indicator -->
-          <p id="backendNote" style="font-size:0.82rem; color:var(--muted); margin-top:16px;">
-            Server Connection: <span id="backendStatus" style="font-weight:600;">checking...</span>
+          <p id="backendNote" style="font-size:0.84rem; color:var(--muted); margin-top:18px;">
+            Server Connection: <span id="backendStatus" style="font-weight:700;">checking…</span>
           </p>
         </div>
 
@@ -169,7 +195,125 @@
   </section>
 
 
-  <!-- HOW IT WORKS -->
+  <!-- ====================================================
+       MODELS &amp; RESULTS
+       ==================================================== -->
+  <section id="models">
+    <div class="container">
+      <div class="section-label">Experiments &amp; Benchmarks</div>
+      <h2 class="section-title">Models &amp; Results</h2>
+      <p class="section-desc">
+        Six machine learning models were trained on 2048-bit Morgan chemical fingerprints
+        and rigorously compared using 10-fold molecule-aware cross-validation.
+      </p>
+
+      <!-- ---------- Final model ---------- -->
+      <h3 class="sub-title">Final Model</h3>
+      <div class="card final-model-card">
+        <div class="final-model-main">
+          <span class="selected-pill">Selected Winner</span>
+          <div class="final-model-name">XGBoost</div>
+        </div>
+        <div class="final-model-stats">
+          <div class="stat">
+            <div class="stat-label">Selection Criterion</div>
+            <div class="stat-value">Highest Mean CV F1</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Mean CV F1</div>
+            <div class="stat-value">0.883443</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Holdout Accuracy</div>
+            <div class="stat-value">80.89%</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Holdout F1</div>
+            <div class="stat-value">87.55%</div>
+          </div>
+        </div>
+        <p class="final-model-note">
+          <strong>XGBoost</strong> was automatically selected because it achieved the highest Mean CV F1 score (0.8834) among all
+          six evaluated models. While other models excel in individual metrics (e.g., Random Forest on recall, ANN on precision),
+          F1-score was pre-specified to ensure optimal precision-recall balance for drug screening.
+        </p>
+      </div>
+
+      <!-- ---------- Comparison table ---------- -->
+      <h3 class="sub-title">Cross-Validation Model Benchmark</h3>
+      <p class="block-text">
+        Six models were evaluated: <strong>XGBoost, Random Forest, SVM, Naive Bayes, RBF and ANN</strong>,
+        using molecule-aware 10-fold cross-validation. Every metric is the mean over the ten folds.
+        Active and Inactive classes are imbalanced, making multi-metric assessment critical.
+      </p>
+
+      <div class="table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Model</th>
+              <th>Mean CV Accuracy</th>
+              <th>Mean CV Precision</th>
+              <th>Mean CV Recall</th>
+              <th>Mean CV F1</th>
+              <th>Std CV F1</th>
+              <th>Mean CV ROC-AUC</th>
+              <th>CV Time (s)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="row-selected"><td class="col-rank">1</td><td class="col-model">XGBoost <span class="selected-pill small">Selected</span></td><td>0.818074</td><td>0.831428</td><td>0.943366</td><td class="best">0.883443</td><td>0.018860</td><td>0.848337</td><td>57.2s</td></tr>
+            <tr><td class="col-rank">2</td><td class="col-model">ANN</td><td class="best">0.824512</td><td class="best">0.857985</td><td>0.910599</td><td>0.883333</td><td>0.018593</td><td>0.849928</td><td>576.6s</td></tr>
+            <tr><td class="col-rank">3</td><td class="col-model">SVM</td><td>0.815243</td><td>0.828448</td><td>0.943522</td><td>0.881843</td><td class="best">0.017401</td><td class="best">0.850113</td><td>9.6s</td></tr>
+            <tr><td class="col-rank">4</td><td class="col-model">Random Forest</td><td>0.794720</td><td>0.785930</td><td class="best">0.989625</td><td>0.875707</td><td>0.020181</td><td>0.844839</td><td>27.2s</td></tr>
+            <tr><td class="col-rank">5</td><td class="col-model">RBF</td><td>0.786794</td><td>0.810871</td><td>0.925781</td><td>0.863449</td><td>0.024309</td><td>0.803433</td><td>11.3s</td></tr>
+            <tr><td class="col-rank">6</td><td class="col-model">Naive Bayes</td><td>0.715395</td><td>0.854398</td><td>0.735006</td><td>0.789277</td><td>0.039539</td><td>0.778382</td><td class="best">5.7s</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        Rows ranked by Mean CV F1. <strong>Bold</strong> marks the top score for each metric (lower is better for Std CV F1 and CV Time).
+      </p>
+
+
+
+      <!-- ---------- Model Comparison Graph ---------- -->
+      <h3 class="sub-title">Model Comparison Graph</h3>
+      <figure class="figure-card">
+        <img src="assets/model_comparison.png"
+             alt="Grouped bar chart comparing Accuracy, Precision, Recall, F1 and ROC-AUC for all six models"
+             loading="lazy" />
+        <figcaption>All five cross-validation metrics across all six machine learning architectures.</figcaption>
+      </figure>
+
+
+
+      <!-- ---------- Evaluation summary ---------- -->
+      <h3 class="sub-title">Evaluation Summary</h3>
+      <div class="card summary-card">
+        <ul class="summary-list">
+          <li><strong>Molecule-aware 10-fold cross-validation.</strong> The 70% development set was split
+              into ten folds so that records of the same molecule never sit on both sides of a split.
+              This keeps the scores honest instead of rewarding a model for recognising molecules it has already seen.</li>
+          <li><strong>Multiple metrics.</strong> Accuracy, precision, recall, F1, ROC-AUC, F1 stability
+              and training time each show a different side of model quality.</li>
+          <li><strong>Why Mean CV F1.</strong> Active and Inactive molecules are not equally common, and both
+              kinds of error matter, so F1 (the balance of precision and recall) was fixed as the selection
+              criterion before comparing the models.</li>
+          <li><strong>Holdout evaluation.</strong> The selected model was evaluated on the untouched
+              holdout set, which played no part in selection: Accuracy 0.8089 &middot; Precision 0.8202 &middot;
+              Recall 0.9388 &middot; F1 0.8755 &middot; ROC-AUC 0.8402.</li>
+          <li><strong>Final selected model: XGBoost</strong> &mdash; highest Mean CV F1 (0.883443) of the six models.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ====================================================
+       HOW IT WORKS
+       ==================================================== -->
   <section id="how-it-works">
     <div class="container">
       <div class="section-label">Pipeline</div>
@@ -192,9 +336,9 @@
         </div>
         <div class="step-card">
           <div class="step-number">3</div>
-          <div class="step-title">Saved Best Model</div>
+          <div class="step-title">Saved XGBoost Model</div>
           <p class="step-desc">
-            The automatically selected best classifier evaluates the fingerprint vector.
+            The selected XGBoost classifier evaluates the fingerprint vector.
           </p>
         </div>
         <div class="step-card">
@@ -209,156 +353,41 @@
   </section>
 
 
-  <!-- MODELS & BENCHMARK RESULTS -->
-  <section id="models" style="background:var(--bg);">
-    <div class="container">
-      <div class="section-label">Experiments</div>
-      <h2 class="section-title">Machine Learning Model Comparison</h2>
-      <p class="section-desc">
-        All 5 models were trained following the base paper's methodology:
-        <strong>70% Development (with 10-fold Stratified Cross-Validation)</strong> and evaluated on an
-        <strong>untouched 30% Holdout dataset</strong> (2,044 molecules).
-      </p>
-
-      <div style="overflow-x:auto; margin-top:28px;">
-        <table style="width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; font-size:0.92rem;">
-          <thead>
-            <tr style="background:#eef3fb; color:var(--text); text-align:left;">
-              <th style="padding:14px;">Model</th>
-              <th style="padding:14px;">Mean 10-Fold CV F1</th>
-              <th style="padding:14px;">Holdout Accuracy</th>
-              <th style="padding:14px;">Precision</th>
-              <th style="padding:14px;">Recall</th>
-              <th style="padding:14px;">Specificity</th>
-              <th style="padding:14px;">Holdout F1</th>
-              <th style="padding:14px;">ROC-AUC</th>
-              <th style="padding:14px;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-top:1px solid var(--border); background:#f0fdf4; font-weight:600;">
-              <td style="padding:12px 14px;">XGBoost</td>
-              <td style="padding:12px 14px;">0.8868</td>
-              <td style="padding:12px 14px;">83.02%</td>
-              <td style="padding:12px 14px;">0.8636</td>
-              <td style="padding:12px 14px;">0.9116</td>
-              <td style="padding:12px 14px;">0.6098</td>
-              <td style="padding:12px 14px; color:var(--success);">0.8869</td>
-              <td style="padding:12px 14px;">0.8699</td>
-              <td style="padding:12px 14px;"><span style="background:#dcfce7; color:var(--success); padding:3px 8px; border-radius:12px; font-size:0.78rem;">Selected Best</span></td>
-            </tr>
-            <tr style="border-top:1px solid var(--border);">
-              <td style="padding:12px 14px;">Random Forest</td>
-              <td style="padding:12px 14px;">0.8920</td>
-              <td style="padding:12px 14px;">82.14%</td>
-              <td style="padding:12px 14px;">0.8499</td>
-              <td style="padding:12px 14px;">0.9176</td>
-              <td style="padding:12px 14px;">0.5608</td>
-              <td style="padding:12px 14px;">0.8824</td>
-              <td style="padding:12px 14px;">0.8639</td>
-              <td style="padding:12px 14px;"><span style="background:#eef3fb; color:var(--primary); padding:3px 8px; border-radius:12px; font-size:0.78rem;">Ensemble Baseline</span></td>
-            </tr>
-            <tr style="border-top:1px solid var(--border);">
-              <td style="padding:12px 14px;">Linear SVM</td>
-              <td style="padding:12px 14px;">0.8599</td>
-              <td style="padding:12px 14px;">78.77%</td>
-              <td style="padding:12px 14px;">0.8537</td>
-              <td style="padding:12px 14px;">0.8560</td>
-              <td style="padding:12px 14px;">0.6025</td>
-              <td style="padding:12px 14px;">0.8548</td>
-              <td style="padding:12px 14px;">0.7843</td>
-              <td style="padding:12px 14px;"><span style="color:var(--muted); font-size:0.8rem;">Linear Baseline</span></td>
-            </tr>
-            <tr style="border-top:1px solid var(--border);">
-              <td style="padding:12px 14px;">RBF Network</td>
-              <td style="padding:12px 14px;">0.8232</td>
-              <td style="padding:12px 14px;">70.06%</td>
-              <td style="padding:12px 14px;">0.7414</td>
-              <td style="padding:12px 14px;">0.9062</td>
-              <td style="padding:12px 14px;">0.1434</td>
-              <td style="padding:12px 14px;">0.8156</td>
-              <td style="padding:12px 14px;">0.5810</td>
-              <td style="padding:12px 14px;"><span style="color:var(--muted); font-size:0.8rem;">Neural Baseline</span></td>
-            </tr>
-            <tr style="border-top:1px solid var(--border);">
-              <td style="padding:12px 14px;">Naive Bayes</td>
-              <td style="padding:12px 14px;">0.5325</td>
-              <td style="padding:12px 14px;">53.13%</td>
-              <td style="padding:12px 14px;">0.8860</td>
-              <td style="padding:12px 14px;">0.4113</td>
-              <td style="padding:12px 14px;">0.8566</td>
-              <td style="padding:12px 14px;">0.5618</td>
-              <td style="padding:12px 14px;">0.7544</td>
-              <td style="padding:12px 14px;"><span style="color:var(--muted); font-size:0.8rem;">Probabilistic Baseline</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- MODEL BENCHMARK IMAGE -->
-      <div style="margin-top: 40px; text-align: center;">
-        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 6px;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
-            <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
-          </svg>
-          Model Performance Benchmark
-        </h3>
-        <p style="font-size: 0.88rem; color: var(--muted); margin-bottom: 20px;">
-          Holdout F1-Score &amp; ROC-AUC comparison across all 5 trained models (30% holdout, 2,044 molecules)
-        </p>
-        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; display: inline-block; max-width: 100%;">
-          <img
-            id="benchmarkImage"
-            src="/model-image/model_comparison.png"
-            alt="Model Comparison - Holdout F1 &amp; ROC-AUC benchmark for XGBoost, Random Forest, Linear SVM, RBF Network, and Naive Bayes"
-            style="width: 100%; max-width: 900px; height: auto; border-radius: 10px; display: block;"
-          />
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ABOUT -->
+  <!-- ====================================================
+       ABOUT
+       ==================================================== -->
   <section id="about">
     <div class="container">
       <div class="section-label">About</div>
       <h2 class="section-title">About This Project</h2>
       <div class="about-box">
-        <h3 style="font-size:1.1rem; color:var(--text); margin-bottom:8px;">Problem Statement</h3>
+        <h3 style="font-size:1.15rem; color:var(--text); margin-bottom:10px;">Problem Statement</h3>
         <p>
-          In early-stage drug discovery, identifying chemical compounds that can bind to and inhibit a specific disease target protein (such as the <strong>Cyclooxygenase-2 (COX-2)</strong> enzyme responsible for inflammation and pain) is a major challenge. Traditional wet-lab synthesis and biological testing of thousands of candidate molecules is extremely time-consuming, labor-intensive, and expensive.
+          In early-stage drug discovery, identifying bioactive compounds for disease-related targets such as <strong>Cyclooxygenase-2 (COX-2)</strong> can be time-consuming and expensive through traditional experimental methods.
         </p>
 
-        <h3 style="font-size:1.1rem; color:var(--text); margin-top:20px; margin-bottom:8px;">What This Project Does</h3>
+        <h3 style="font-size:1.15rem; color:var(--text); margin-top:22px; margin-bottom:10px;">What This Project Does</h3>
         <p>
-          This project provides an automated, machine-learning-based virtual screening tool. A user provides a chemical molecule's text representation as a <strong>SMILES string</strong>. Using <strong>RDKit</strong>, the structure is converted into a 2048-bit Morgan circular fingerprint that encodes the molecule's unique chemical substructures.
+          This project is a machine-learning-based virtual screening tool that takes a molecule's <strong>SMILES</strong> representation and uses <strong>RDKit</strong> to convert it into a 2048-bit Morgan fingerprint representing its chemical structure.
         </p>
         <p>
-          Our trained <strong>XGBoost classifier</strong> analyzes these numerical features and predicts whether the compound is biologically <strong>Active</strong> or <strong>Inactive</strong> against the target, providing an associated confidence score to help researchers quickly shortlist potential drug candidates.
+          Six models &mdash; XGBoost, Random Forest, SVM, Naive Bayes, RBF, and ANN &mdash; are evaluated using molecule-aware cross-validation. The model with the highest mean F1 score is automatically selected. In our current experiment, <strong>XGBoost</strong> achieved the highest mean F1 score.
+        </p>
+        <p>
+          The selected model predicts whether a compound is <strong>Active</strong> or <strong>Inactive</strong> and provides a probability score to help prioritize compounds for further investigation.
         </p>
       </div>
     </div>
   </section>
 
 
-  <!-- FOOTER -->
+  <!-- ====================================================
+       FOOTER
+       ==================================================== -->
   <footer>
     <div class="footer-logo">Bioactive Molecule Predictor</div>
-    <div class="footer-sub">Machine Learning &middot; Drug Discovery &middot; COX-2 Inhibitor Prediction</div>
-    <div class="footer-tags">
-      <span>XGBoost</span>
-      <span>RDKit</span>
-      <span>Morgan Fingerprints</span>
-      <span>FastAPI</span>
-      <span>ChEMBL</span>
-    </div>
-    <div class="footer-disclaimer">For research and educational purposes only. Not intended for clinical use.</div>
   </footer>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=3.2"></script>
 </body>
 </html>
-
-
-

@@ -1,24 +1,37 @@
-﻿/* ============================================================
-   BIOACTIVE MOLECULE PREDICTOR - script.js
-   Vanilla JavaScript - connects frontend to FastAPI backend
+/* ============================================================
+   BIOACTIVE MOLECULE PREDICTOR — script.js
+   Vanilla JavaScript — connects frontend to FastAPI backend
    ============================================================ */
 
-// --- Dynamic Backend URL ---
+// ─── Dynamic Backend URL ──────────────────────────────────────────────────────
+// If loaded from localhost:8000/app/, origin is used.
+// If loaded via file:// protocol directly, defaults to http://127.0.0.1:8000
 const API_BASE = (window.location.protocol === "file:")
   ? "http://127.0.0.1:8000"
   : window.location.origin;
 
-// --- Example SMILES to cycle through ---
+// ─── Example SMILES to cycle through ─────────────────────────────────────────
 const EXAMPLES = [
-  "CCO",
-  "CC(=O)Oc1ccccc1C(=O)O",
-  "c1ccccc1",
-  "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
-  "CS(=O)(=O)c1ccc(-c2csc(CC(=O)O)c2-c2ccc(F)cc2)cc1"
+  "CCO",                                          // Ethanol
+  "CC(=O)Oc1ccccc1C(=O)O",                       // Aspirin
+  "c1ccccc1",                                     // Benzene
+  "CC(C)Cc1ccc(cc1)C(C)C(=O)O",                  // Ibuprofen
+  "CS(=O)(=O)c1ccc(-c2csc(CC(=O)O)c2-c2ccc(F)cc2)cc1"  // COX-2 active/inactive candidate
 ];
 let exampleIndex = 0;
 
-// --- DOM Element References ---
+// The final selected model (see "Models & Results"). Used ONLY to warn if the
+// backend reports a different model. The displayed model name always comes
+// from the backend response, never from this constant.
+const EXPECTED_MODEL = "XGBoost";
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// ─── DOM Element References ───────────────────────────────────────────────────
 const smilesInput    = document.getElementById("smilesInput");
 const predictBtn     = document.getElementById("predictBtn");
 const clearBtn       = document.getElementById("clearBtn");
@@ -31,7 +44,7 @@ const backendStatus  = document.getElementById("backendStatus");
 const navToggle      = document.getElementById("navToggle");
 const navMobile      = document.getElementById("navMobile");
 
-// --- 1. Navigation ---
+// ─── 1. Navigation ────────────────────────────────────────────────────────────
 if (navToggle) {
   navToggle.addEventListener("click", () => {
     const isOpen = navMobile.classList.toggle("open");
@@ -63,7 +76,7 @@ document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   });
 });
 
-// --- 2. Backend Health Check ---
+// ─── 2. Backend Health Check ──────────────────────────────────────────────────
 async function checkBackendHealth() {
   if (!backendStatus) return;
   try {
@@ -83,7 +96,7 @@ async function checkBackendHealth() {
 
 checkBackendHealth();
 
-// --- 3. Load Example ---
+// ─── 3. Load Example ─────────────────────────────────────────────────────────
 function loadExample() {
   smilesInput.value = EXAMPLES[exampleIndex % EXAMPLES.length];
   exampleIndex++;
@@ -95,9 +108,10 @@ if (loadExBtn) {
   loadExBtn.addEventListener("click", loadExample);
 }
 
-// --- 4. Input Validation ---
+// ─── 4. Input Validation ─────────────────────────────────────────────────────
 function validateInput() {
   const raw = smilesInput.value.trim();
+
   if (raw === "") {
     showError("Please enter a SMILES string before predicting.");
     return false;
@@ -130,14 +144,14 @@ if (smilesInput) {
   smilesInput.addEventListener("input", clearError);
 }
 
-// --- 5. Loading State ---
+// ─── 5. Loading State ─────────────────────────────────────────────────────────
 function setLoadingState(isLoading) {
   if (isLoading) {
     resultEmpty.style.display   = "none";
     resultLoading.style.display = "flex";
     resultData.style.display    = "none";
     predictBtn.disabled         = true;
-    predictBtn.textContent      = "Predicting...";
+    predictBtn.textContent      = "Predicting…";
   } else {
     resultLoading.style.display = "none";
     predictBtn.disabled         = false;
@@ -145,7 +159,7 @@ function setLoadingState(isLoading) {
   }
 }
 
-// --- 6. Display Result ---
+// ─── 6. Display Result ────────────────────────────────────────────────────────
 function displayPrediction(data) {
   const isActive    = String(data.prediction).toLowerCase() === "active";
   const badgeClass  = isActive ? "badge-active" : "badge-inactive";
@@ -153,8 +167,19 @@ function displayPrediction(data) {
   const note        = isActive ? "(Biologically Active)" : "(Biologically Inactive)";
   const probPercent = (data.probability * 100).toFixed(1) + "%";
 
+  // If the backend reports a model other than the final selected one, say so
+  // visibly instead of hiding it (usually means old best_model.pkl / metadata.json).
+  const reportedModel = data.model ? String(data.model) : "";
+  const modelMismatch = reportedModel !== "" &&
+    !reportedModel.toLowerCase().includes(EXPECTED_MODEL.toLowerCase());
+  const mismatchWarning = modelMismatch
+    ? `<p class="model-warning"><strong>Model mismatch:</strong> the backend reports
+       "${escapeHtml(reportedModel)}", but the final selected model is ${EXPECTED_MODEL}.
+       The backend is probably still loading old model/metadata files.</p>`
+    : "";
+
   const displaySmiles = data.smiles.length > 40
-    ? data.smiles.substring(0, 40) + "..."
+    ? data.smiles.substring(0, 40) + "…"
     : data.smiles;
 
   resultData.innerHTML = `
@@ -176,95 +201,94 @@ function displayPrediction(data) {
         <span class="result-row-value">${data.model}</span>
       </div>
       <div class="result-row">
-        <span class="result-row-label">SMILES Input</span>
-        <span class="result-row-value" style="font-family:monospace; font-size:0.8rem;">${displaySmiles}</span>
+        <span class="result-row-label">Input SMILES</span>
+        <span class="result-row-value">${displaySmiles}</span>
       </div>
     </div>
+    ${mismatchWarning}
   `;
 
   resultData.style.display = "block";
 }
 
-// --- 7. Prediction API Call ---
-async function runPrediction() {
-  if (!validateInput()) return;
-  const smiles = smilesInput.value.trim();
+// ─── 7. Display Error ─────────────────────────────────────────────────────────
+function displayError(message) {
+  resultData.innerHTML = `
+    <div class="result-empty" style="color:var(--error);">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9"  y1="9" x2="15" y2="15"></line>
+      </svg>
+      <p style="margin-top:8px;">${message}</p>
+    </div>
+  `;
+  resultData.style.display = "block";
+}
 
+// ─── 8. Clear ─────────────────────────────────────────────────────────────────
+function clearPrediction() {
+  smilesInput.value           = "";
+  clearError();
+  resultEmpty.style.display   = "flex";
+  resultLoading.style.display = "none";
+  resultData.style.display    = "none";
+  resultData.innerHTML        = "";
+  smilesInput.focus();
+}
+
+if (clearBtn) {
+  clearBtn.addEventListener("click", clearPrediction);
+}
+
+// ─── 9. Predict — sends real request to FastAPI ───────────────────────────────
+async function predictMolecule() {
+  if (!validateInput()) return;
+
+  const smiles = smilesInput.value.trim();
   setLoadingState(true);
 
   try {
     const response = await fetch(`${API_BASE}/predict`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ smiles })
+      body: JSON.stringify({ smiles: smiles })
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const err = await response.json().catch(() => ({ detail: "Unknown server error" }));
-      throw new Error(err.detail || `HTTP ${response.status}`);
+      const errMsg = data.detail || "Prediction request rejected by backend.";
+      setLoadingState(false);
+      displayError(errMsg);
+      return;
     }
 
-    const data = await response.json();
-    displayPrediction(data);
-  } catch (err) {
-    showError("Prediction failed: " + err.message);
-    resultEmpty.style.display = "flex";
-  } finally {
     setLoadingState(false);
+    displayPrediction(data);
+
+  } catch (err) {
+    setLoadingState(false);
+    displayError(
+      `Could not reach the backend at <strong>${API_BASE}</strong>.<br>` +
+      `Ensure FastAPI server is running: <code>uvicorn main:app --reload --port 8000</code>`
+    );
+    console.error("Fetch error:", err);
   }
 }
 
 if (predictBtn) {
-  predictBtn.addEventListener("click", runPrediction);
+  predictBtn.addEventListener("click", predictMolecule);
 }
+
 
 if (smilesInput) {
   smilesInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && e.ctrlKey) {
       e.preventDefault();
-      runPrediction();
+      predictMolecule();
     }
   });
 }
 
-if (clearBtn) {
-  clearBtn.addEventListener("click", () => {
-    smilesInput.value = "";
-    clearError();
-    resultEmpty.style.display = "flex";
-    resultData.style.display  = "none";
-    smilesInput.focus();
-  });
-}
-
-// ============================================================
-// DIAGNOSTICS STUDIO - Tab switching + Charts
-// ============================================================
-
-// --- Tab Switching ---
-const studioTabBtns = document.querySelectorAll(".studio-tab-btn");
-const tabPanels     = document.querySelectorAll(".tab-content-panel");
-
-function switchTab(targetId) {
-  studioTabBtns.forEach(btn => {
-    btn.classList.toggle("active", btn.getAttribute("data-tab") === targetId);
-  });
-  tabPanels.forEach(panel => {
-    panel.classList.toggle("active", panel.id === targetId);
-  });
-
-  // Lazy-init charts on first activation
-  if (targetId === "tab-roc" && !rocChartInstance)           initRocChart();
-  if (targetId === "tab-benchmark" && !benchmarkChartInstance) initBenchmarkChart();
-  if (targetId === "tab-radar" && !radarChartInstance)       initRadarChart();
-}
-
-studioTabBtns.forEach(btn => {
-  btn.addEventListener("click", () => switchTab(btn.getAttribute("data-tab")));
-});
-
-// --- Page Ready ---
-document.addEventListener("DOMContentLoaded", () => {
-  // All interactive diagnostics removed - using static benchmark image.
-  console.log("Bioactive Molecule Predictor frontend loaded.");
-});
